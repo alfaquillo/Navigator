@@ -1,5 +1,5 @@
 import numpy as np
-
+from config import *
 
 def decide_direction(nav_mask, roi_mask):
 
@@ -20,9 +20,7 @@ def decide_direction(nav_mask, roi_mask):
     left_ratio  = np.mean(left)
     right_ratio = np.mean(right)
 
-    MIN_FORWARD   = 0.18
-    DELTA_SIDE    = 0.05
-    DELTA_CENTER  = 0.06
+
 
     best_side = max(left_ratio, right_ratio)
     side_diff = abs(left_ratio - right_ratio)

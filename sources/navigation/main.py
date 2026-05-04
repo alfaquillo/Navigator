@@ -12,46 +12,41 @@ from navigation import decide_direction
 from slam import integrate_observation, move_rover
 from visualization import colorize_mask, draw_slam
 from rover_ws import RoverClient
+from frame_source import FrameSource
 
 
 async def main():
 
-    interpreter, input_details, output_details = load_model(MODEL_PATH)
+    model_info = load_model(MODEL_PATH)
 
-    image_paths = sorted([
-        os.path.join(IMAGE_DIR, x)
-        for x in os.listdir(IMAGE_DIR)
-        if x.lower().endswith((".jpg", ".png"))
-    ])
-
-    print("Imágenes encontradas:", len(image_paths))
-
-    roi_mask, roi_pts = trapezoid_roi((IMG_DATASET_H, IMG_DATASET_W))
-
+    source = FrameSource()
     rover = RoverClient()
     await rover.connect()
-
 
     decision_buffer = []
     last_command = "nav_ADELANTE"
 
-    start = time.time()
+    input_details = model_info["input_details"] 
 
-    for idx, path in enumerate(image_paths):
+    # inicializar frame para ROI
+    ret, img, _ = source.read()
+    if not ret:
+        return
 
-        img = cv2.imread(path)
+    h, w = img.shape[:2]
+    roi_mask, roi_pts = trapezoid_roi((h, w))
 
-        # --------------------------
-        # PERCEPCIÓN
-        # --------------------------
+    while True:
+        ret, img, idx = source.read()
+        if not ret:
+            break
+
         model_img = preprocess(img, input_details)
 
         mask = infer(
-            interpreter,
-            input_details,
-            output_details,
+            model_info,
             model_img,
-            (IMG_DATASET_W, IMG_DATASET_H)
+            (w, h)
         )
 
         nav_mask = create_navigation_mask(mask)

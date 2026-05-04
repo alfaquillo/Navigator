@@ -10,11 +10,11 @@ import slam
 # ==============================
 def colorize_mask(mask):
     colors = np.array([
-        [60, 60, 60],
-        [0, 255, 255],
-        [0, 0, 255],
-        [255, 200, 0],
-        [0, 255, 0]
+        [60, 60, 60], #grey unknown         
+        [0, 255, 255], #yellow craters
+        [0, 0, 255],   #red rocks
+        [255, 200, 0], #blue mountains
+        [0, 255, 0]    #green sky
     ], dtype=np.uint8)
 
     return colors[mask]
@@ -29,25 +29,45 @@ def draw_slam():
     rx, ry = slam.meters_to_cell()
     theta = slam.theta
 
+    # BGR (OpenCV)
     colors = np.array([
-        [60, 60, 60],
-        [0, 255, 255],
-        [0, 0, 255],
-        [255, 200, 0],
-        [255,255,0]
+        [60, 60, 60],      # 0 background model 
+        [0, 255, 255],     # 1 crater   -> amarillo
+        [0, 0, 255],       # 2 rock     -> rojo
+        [255, 200, 0],     # 3 mountain -> azul/cyan
+        [0, 255, 0],       # 4 sky      -> verde 
     ], dtype=np.uint8)
 
-    vis = np.zeros((slam.MAP_H, slam.MAP_W, 3), dtype=np.uint8)
+    h, w = grid.shape
+    vis = np.zeros((h, w, 3), dtype=np.uint8)
 
-    known = (grid != UNKNOWN) & (grid != TRACE)
-    vis[known] = colors[grid[known]]
+    # -----------------------------------
+    # fondo mapa no observado
+    # -----------------------------------
+    vis[:] = (40, 40, 40)
 
-    vis[grid == UNKNOWN] = (40,40,40)
-    vis[grid == TRACE]   = (255,0,255)
+    # -----------------------------------
+    # pintar clases semánticas
+    # -----------------------------------
+    observed = grid != UNKNOWN
 
-    # ===============================
-    # VENTANA CENTRADA ROBUSTA
-    # ===============================
+    valid_classes = observed & (grid <= 4)
+    vis[valid_classes] = colors[grid[valid_classes]]
+
+    # -----------------------------------
+    # trayectoria histórica
+    # -----------------------------------
+    for tx, ty, _ in slam.trajectory:
+
+        gx = int(slam.origin_x + tx / slam.CELL_M)
+        gy = int(slam.origin_y - ty / slam.CELL_M)
+
+        if 0 <= gx < w and 0 <= gy < h:
+            vis[gy, gx] = (255, 0, 255)   # magenta
+
+    # -----------------------------------
+    # ventana centrada en rover
+    # -----------------------------------
     VIEW = 120
     half = VIEW // 2
 
@@ -62,13 +82,32 @@ def draw_slam():
             cx = dx + half
             cy = dy + half
 
-            if 0 <= gx < slam.MAP_W and 0 <= gy < slam.MAP_H:
+            if 0 <= gx < w and 0 <= gy < h:
                 canvas[cy, cx] = vis[gy, gx]
             else:
                 canvas[cy, cx] = (0, 0, 0)
 
-    # rover
-    canvas[half, half] = (0,255,0)
+    # -----------------------------------
+    # rover actual
+    # -----------------------------------
+    canvas[half, half] = (0, 255, 0)
 
+    # -----------------------------------
+    # heading
+    # -----------------------------------
+    hx = int(half + 8 * np.cos(theta))
+    hy = int(half - 8 * np.sin(theta))
 
-    return cv2.resize(canvas, None, fx=6, fy=6, interpolation=cv2.INTER_NEAREST)
+    if 0 <= hx < VIEW and 0 <= hy < VIEW:
+        canvas[hy, hx] = (255, 255, 255)
+
+    # -----------------------------------
+    # escalar visualización
+    # -----------------------------------
+    return cv2.resize(
+        canvas,
+        None,
+        fx=5,
+        fy=5,
+        interpolation=cv2.INTER_NEAREST
+    )

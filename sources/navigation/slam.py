@@ -3,12 +3,12 @@ import math
 from config import *
 
 # ==============================
-# ESTADO
+# ESTADO GLOBAL
 # ==============================
 grid = np.full((MAP_H, MAP_W), UNKNOWN, dtype=np.uint8)
 
 x_m, y_m = 0.0, 0.0
-theta = math.pi / 2
+theta = math.pi / 2 
 
 origin_x = MAP_W // 2
 origin_y = MAP_H // 2
@@ -26,36 +26,42 @@ def meters_to_cell():
 
 
 # ==============================
-# EXPANSIÓN
+# EXPANSIÓN DINÁMICA
 # ==============================
 def expand_map_if_needed(rx, ry):
     global grid, origin_x, origin_y, MAP_W, MAP_H
 
     pad = 40
 
-    expand_left   = rx < 5
-    expand_right  = rx > MAP_W - 6
-    expand_top    = ry < 5
+    expand_left = rx < 5
+    expand_right = rx > MAP_W - 6
+    expand_top = ry < 5
     expand_bottom = ry > MAP_H - 6
 
     if not (expand_left or expand_right or expand_top or expand_bottom):
         return
 
-    new_h = MAP_H + pad*(expand_top + expand_bottom)
-    new_w = MAP_W + pad*(expand_left + expand_right)
+    old_h, old_w = grid.shape
+
+    new_h = old_h + pad * (expand_top + expand_bottom)
+    new_w = old_w + pad * (expand_left + expand_right)
 
     new_grid = np.full((new_h, new_w), UNKNOWN, dtype=np.uint8)
 
-    off_y = pad if expand_top else 0
     off_x = pad if expand_left else 0
+    off_y = pad if expand_top else 0
 
-    new_grid[off_y:off_y+MAP_H, off_x:off_x+MAP_W] = grid
+    new_grid[
+        off_y:off_y + old_h,
+        off_x:off_x + old_w
+    ] = grid
 
     grid = new_grid
-    MAP_H, MAP_W = new_grid.shape
 
     origin_x += off_x
     origin_y += off_y
+
+    MAP_H, MAP_W = new_grid.shape
 
 
 # ==============================
@@ -66,67 +72,79 @@ def move_rover(decision):
 
     if decision == "IZQUIERDA":
         theta += math.radians(TURN_ANGLE_DEG)
+
     elif decision == "DERECHA":
         theta -= math.radians(TURN_ANGLE_DEG)
 
-    x_m += STEP_METERS * math.cos(theta)
-    y_m += STEP_METERS * math.sin(theta)
+    if decision == "RETROCEDER":
+        step = -STEP_METERS
+    else:
+        step = STEP_METERS
+
+    x_m += step * math.cos(theta)
+    y_m += step * math.sin(theta)
 
     trajectory.append((x_m, y_m, theta))
 
 
 # ==============================
-# INTEGRACIÓN OBSERVACIÓN 
+# INTEGRACIÓN OBSERVACIÓN
 # ==============================
 def integrate_observation(mask):
+    global grid
 
     rx, ry = meters_to_cell()
     expand_map_if_needed(rx, ry)
     rx, ry = meters_to_cell()
 
-    if not (0 <= rx < MAP_W and 0 <= ry < MAP_H):
+    h, w = grid.shape
+
+    if not (0 <= rx < w and 0 <= ry < h):
         return
 
-    # marcar trayectoria
-    grid[ry, rx] = TRACE
+    start_row = int(mask.shape[0] * 0.45)
+    cropped = mask[start_row:, :]
 
-    # reducir resolución
-    mini = mask[::16, ::16]
+    mini = cropped[::6, ::6]
     mh, mw = mini.shape
 
-    cx = mw // 2
-    cy = mh
+    
 
-    # ===============================
-    # BASE VECTORIAL 
-    # ===============================
+    painted = 0
+    class_counts = {}
 
-    theta_corr = -theta
-
-    fx = math.cos(theta_corr)
-    fy = math.sin(theta_corr)
-
-    rx_v = math.sin(theta_corr)
-    ry_v = -math.cos(theta_corr)
+    DEPTH_SCALE = 0.5
+    LATERAL_SCALE = 0.7
 
     for r in range(mh):
         for c in range(mw):
 
-            # coordenadas locales
-            lx = cx - c      # derecha
-            ly = cy - r      # adelante
+            val = int(mini[r, c])
 
-            # proyección a mundo
-            gx_rel = lx * rx_v + ly * fx
-            gy_rel = lx * ry_v + ly * fy
+            if val in [UNKNOWN_CLASS, SKY]:
+                continue
 
-            gx = int(rx + gx_rel)
-            gy = int(ry + gy_rel)
+            depth = (mh - r) * DEPTH_SCALE
 
-            if 0 <= gx < MAP_W and 0 <= gy < MAP_H:
+            
+            lateral = (mw / 2 - c) * LATERAL_SCALE
 
-                # no borrar trayectoria
-                if grid[gy, gx] == TRACE:
-                    continue
+            wx = (
+                depth * math.cos(theta)
+                - lateral * math.sin(theta)
+            )
 
-                grid[gy, gx] = mini[r, c]
+            wy = (
+                depth * math.sin(theta)
+                + lateral * math.cos(theta)
+            )
+
+            gx = int(rx + wx)
+            gy = int(ry - wy)
+
+            if 0 <= gx < w and 0 <= gy < h:
+                grid[gy, gx] = val
+                painted += 1
+                class_counts[val] = class_counts.get(val, 0) + 1
+
+    

@@ -9,10 +9,10 @@ from sensors import Sensors
 from navigation import decide_direction
 
 VEL_MAX = 6
-CMD_TIME = 400
+CMD_TIME = 500
 bias_d = 1.3
 bias_i = 1
-OVERRIDE_CYCLES = 3
+OVERRIDE_CYCLES = 2
 
 
 def decision_to_motors(decision):
@@ -46,7 +46,7 @@ class RoverClient:
         self.override_timer = 0
 
         self.current_command = "nav_ADELANTE"
-        self.send_interval = 0.1
+        self.send_interval = 0.05
 
         self.connected = False
         self.reconnecting = False
@@ -74,7 +74,6 @@ class RoverClient:
 
             print("[WS] Conectado al rover")
 
-            await self.ws.send(json.dumps({"D": 90}))
 
             if not hasattr(self, "rx_task") or self.rx_task.done():
                 self.rx_task = asyncio.create_task(self.receiver_loop())
@@ -237,6 +236,7 @@ class RoverClient:
             cmd = {
                 "K": int(round(izq)),
                 "Q": int(round(der)),
+                "D": 90,
                 "M": 1,
                 "duracion_ms": int(CMD_TIME)
             }
