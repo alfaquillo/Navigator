@@ -44,7 +44,7 @@ String intToString(uint8_t * value, size_t length) {
 
 /* ----------- STOP seguro ----------- */
 void sendSTOP() {
-  Serial.println("WS+0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0");
+  Serial.println("WS+0;0;0;90;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0");
 }
 
 /* ----------- Supervisión ----------- */
