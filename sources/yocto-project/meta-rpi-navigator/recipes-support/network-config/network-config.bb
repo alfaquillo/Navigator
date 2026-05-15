@@ -1,6 +1,6 @@
 SUMMARY = "Network configuration for rpi"
 LICENSE = "Apache-2.0"
-LIC_FILES_CHKSUM = "file://hostapd.conf;md5=1dad626efccbef8c8e50e2dc5a1c293a"
+LIC_FILES_CHKSUM = "file://hostapd.conf;md5=157db72e153964af0392379522d4ba6b"
 
 SRC_URI = " \
     file://hostapd.conf \

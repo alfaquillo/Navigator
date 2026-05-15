@@ -1,7 +1,7 @@
 
 # Guía de creación y uso del contenedor Ubuntu 24.04 para Yocto (Raspberry Pi 5)
 
-Entorno Host: Fedora 43 usando Toolbox o Podman
+Entorno Host: Fedora 44 usando Toolbox o Podman
 
 ---
 
@@ -156,7 +156,7 @@ bitbake-layers add-layer ../meta-openembedded/meta-networking
 bitbake-layers add-layer ../meta-tensorflow
 ```
 
-8. Configuración de compilación para Raspberry Pi 5
+9. Configuración de compilación para Raspberry Pi 5
 
 Editar conf/local.conf:
 ```bash
@@ -167,16 +167,8 @@ nano conf/local.conf
 Modificar dentro de local.conf estas entradas, descomentalas o agregalas si no se encuentran
 ```bash
 
+MACHINE = "raspberrypi5"
 LICENSE_FLAGS_ACCEPTED = "commercial"
-
-MACHINE = "raspberrypi4-64"
-ENABLE_UART = "1"
-GPU_MEM = "256"
-
-MACHINE_FEATURES:append = " vc4graphics"
-DISTRO_FEATURES:append = " x11 opengl"
-
-#  KMS 
 RPI_USE_KMS = "1"
 
 ```
@@ -187,8 +179,8 @@ SSTATE_MIRRORS ?= "file://.* http://sstate.yoctoproject.org/all/PATH;downloadfil
 ```
 
 
-9. Importar receta custom.
-Para importar la receta custom de nuestro semáforo, copiaremos el contenido de la carpeta meta-rpi-navigator que se encuentra dentro de este repositorio <br>
+10. Importar receta custom.
+Para importar la receta custom de nuestro rover, copiaremos el contenido de la carpeta meta-rpi-navigator que se encuentra dentro de este repositorio <br>
 Copie la carpeta meta-rpi-navigator en ~/tools/poky <br>
 Registrar la capa en bblayers.conf:
 ```bash
@@ -196,27 +188,27 @@ cd ~/tools/poky/rpi-build
 bitbake-layers add-layer ../meta-rpi-navigator
 ```
 
-10. Descarga de dependencias para imagen mínima (opcional), para compilar offline
+11. Descarga de dependencias para imagen mínima (opcional), para compilar offline
 
 ```bash
 bitbake core-image-minimal -c fetch
 
 
 ```
-11. Compilación de imagen mínima 
+12. Compilación de imagen mínima 
 
 ```bash
 bitbake core-image-minimal
 ```
 
-12. Generación y copia de imagen en la SD de la Raspberry pi5
+13. Generación y copia de imagen en la SD de la Raspberry pi5
 La ruta donde va a estar la imagen compilada es la siguiente
 
 ```bash
 cd ~/tools/poky/rpi-build/tmp/deploy/images/raspberrypi5
 ```
 
-13. Para flashearlo en Linux
+14. Para flashearlo en Linux
 
 Conecte e identifique la SD conectada en el equipo Linux:
 

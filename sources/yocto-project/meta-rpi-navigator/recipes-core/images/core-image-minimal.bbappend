@@ -5,7 +5,7 @@ IMAGE_FEATURES:remove = "x11-base"
 DISTRO_FEATURES:remove = "x11 wayland gtk"
 
 ########################################
-# Networking
+# Wifi+ Ethernet
 ########################################
 IMAGE_INSTALL:append = " \
     hostapd \
@@ -30,6 +30,7 @@ IMAGE_INSTALL:append = " \
     python3-opencv \
     python3-ctypes \
     python3-json \
+    python3-websockets \
 "
 
 ########################################

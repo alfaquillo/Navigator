@@ -106,7 +106,7 @@ https://lastminuteengineers.com/getting-started-with-esp32-cam/
 ### 2. Descargar el repositorio 
 
 ```bash
-git clone https://github.com/alfaquillo/TFG_Quillo_CEA_ITCR
+git clone https://github.com/alfaquillo/TFG_Quillo_CEA_ITCR.git
 ```
 
 ### 3. Abrir firmware de la carpeta sources/esp32
