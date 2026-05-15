@@ -49,7 +49,7 @@ STEP_METERS = 0.1
 
 #Sensors
 
-WS_URI = "ws://192.168.4.1:8765"
+WS_URI = "ws://192.168.3.2:8765"
 
 
 DEFAULT_IR = 0
@@ -60,4 +60,4 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 INPUT_MODE = "dataset"  
 
 IMAGE_DIR = "dataset_test_384"
-CAMERA_URL = "http://192.168.4.1:81/stream"
+CAMERA_URL = "http://192.168.3.2:9000/mjpg"

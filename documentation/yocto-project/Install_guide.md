@@ -213,7 +213,7 @@ bitbake core-image-minimal
 La ruta donde va a estar la imagen compilada es la siguiente
 
 ```bash
-cd ~/tools/poky/rpi-build/tmp/deploy/images/
+cd ~/tools/poky/rpi-build/tmp/deploy/images/raspberrypi5
 ```
 
 13. Para flashearlo en Linux
