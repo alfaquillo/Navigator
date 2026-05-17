@@ -148,6 +148,71 @@ pip install -r requirements.txt
 > El sistema embebido principal utiliza dependencias integradas en la imagen Yocto.
 
 ---
+### Conexión a red local del sistema
+
+La Raspberry Pi 5 funciona como punto de acceso Wi-Fi principal del sistema.
+
+Topología de red:
+
+```text
+Laptop / cliente ---> Raspberry Pi 5 (AP) ---> Rover / ESP32
+```
+
+Configuración:
+
+- La Raspberry Pi genera la red local utilizada por el sistema.
+- El rover (ESP32) se conecta automáticamente a esta red al iniciar.
+- Los clientes externos (por ejemplo laptop para monitoreo) deben conectarse manualmente a la misma red Wi-Fi.
+Todos los dispositivos deben conectarse a esta red local:
+
+```text
+SSID: Moon_rpi_AP
+Password: seteclab2026
+```
+
+### Pasos de conexión
+
+1. Encender Raspberry Pi 5 y rover.
+2. Esperar a que la red Wi-Fi del sistema esté disponible.
+3. Conectar la laptop a la red generada por Raspberry Pi.
+4. Ejecutar visualización remota:
+
+
+Una vez conectado, el cliente recibirá el stream TCP generado por el sistema de navegación.
+
+### Direcciones utilizadas
+
+- Raspberry Pi:
+```text
+192.168.3.1
+```
+
+- Rover / ESP32:
+```text
+192.168.3.2
+```
+
+- Puerto streaming TCP:
+```text
+8080
+```
+
+- WebSocket rover:
+```text
+ws://192.168.3.2:8765
+```
+
+## Acceso remoto por SSH
+
+La Raspberry Pi 5 opera en modo headless, por lo que la administración y ejecución del sistema se realiza remotamente mediante SSH.
+
+Establecer conexión SSH:
+
+```bash
+ssh root@192.168.3.1
+```
+
+> La imagen Yocto utilizada habilita acceso SSH para administración remota.
 
 ## Ejecución
 
@@ -155,7 +220,7 @@ El sistema principal se instala mediante Yocto como una aplicación integrada de
 
 Durante el proceso de build:
 
-- el launcher principal se instala en:
+- se instala un launcher ejecutable en:
 
 ```text
 /usr/bin/navigation
@@ -167,38 +232,52 @@ Durante el proceso de build:
 /usr/share/navigation
 ```
 
-### Ejecución del sistema
+### Método recomendado
 
-Una vez iniciada la Raspberry Pi, el sistema puede ejecutarse mediante:
+El sistema puede ejecutarse directamente mediante:
 
 ```bash
 navigation
 ```
 
-Este comando:
+Este comando inicia automáticamente el sistema principal de navegación autónoma.
 
-1. muestra banner de inicio
-2. cambia automáticamente al directorio:
+### Ejecución manual
 
-```text
-/usr/share/navigation
-```
-
-3. ejecuta:
+También es posible ejecutar manualmente desde el directorio de instalación:
 
 ```bash
+cd /usr/share/navigation
 python3 main.py
 ```
 
-sin requerir navegación manual entre directorios.
+Esta modalidad es útil para debugging, pruebas o modificaciones rápidas.
 
-### Archivos instalados
-El directorio de ejecución contiene:
+### Visualización remota de transmisión
+
+Si se encuentra habilitado `TCP_STREAM = True` en `config.py`, el sistema transmite frames procesados vía TCP.
+
+Para visualizar la transmisión desde una laptop u otro equipo cliente, ejecutar este archivo de python desde el equipo cliente:
+
+```bash
+python3 socket_rpi.py
+```
+
+Este script permite:
+
+- visualizar segmentación en tiempo real
+- observar overlays y debugging visual
+- monitorear salida remota sin interfaz local en Raspberry Pi
+
+## Archivos instalados
+
+El directorio principal contiene:
 
 - modelo TensorFlow Lite
+- scripts Python
 - configuración global
-- scripts Python del sistema
-- datasets y utilidades auxiliares
+- datasets auxiliares
+- utilidades de visualización
 
 Ruta:
 
