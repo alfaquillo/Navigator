@@ -122,7 +122,7 @@ Permite recepción de comandos remotos para:
 git clone https://github.com/alfaquillo/TFG_Quillo_CEA_ITCR.git
 ```
 
-### 2. Abrir proyecto principal en sources/rover_firmware
+### 2. Abrir proyecto principal ubicado en sources/rover_firmware
 Abrir:
 
 ```text

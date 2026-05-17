@@ -12,7 +12,7 @@ def preprocess(img, input_details):
 
     img = img.astype(np.float32) / 255.0
 
-    # HWC -> CHW (CRÍTICO)
+    # HWC -> CHW
     img = np.transpose(img, (2, 0, 1))
 
     # batch

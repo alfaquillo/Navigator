@@ -82,13 +82,62 @@ Dependencias incluidas:
 - TensorFlow Lite
 - GStreamer
 
-Aplicación principal:
+## Ejecución
+
+El sistema principal se instala mediante Yocto como una aplicación integrada dentro de la imagen final de Raspberry Pi 5.
+
+Durante el proceso de build:
+
+- el launcher principal se instala en:
+
+```text
+/usr/bin/navigation
+```
+
+- los archivos del sistema se copian en:
+
+```text
+/usr/share/navigation
+```
+
+### Ejecución del sistema
+
+Una vez iniciada la Raspberry Pi, el sistema puede ejecutarse mediante:
+
+```bash
+navigation
+```
+
+Este comando:
+
+1. muestra banner de inicio
+2. cambia automáticamente al directorio:
+
+```text
+/usr/share/navigation
+```
+
+3. ejecuta:
 
 ```bash
 python3 main.py
 ```
 
----
+sin requerir navegación manual entre directorios.
+
+### Archivos instalados
+El directorio de ejecución contiene:
+
+- modelo TensorFlow Lite
+- configuración global
+- scripts Python del sistema
+- datasets y utilidades auxiliares
+
+Ruta:
+
+```text
+/usr/share/navigation
+```
 
 ## `recipes-core/images/core-image-minimal.bbappend`
 Extiende imagen base de Yocto.

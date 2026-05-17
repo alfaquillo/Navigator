@@ -109,12 +109,12 @@ https://lastminuteengineers.com/getting-started-with-esp32-cam/
 git clone https://github.com/alfaquillo/TFG_Quillo_CEA_ITCR.git
 ```
 
-### 3. Abrir firmware de la carpeta sources/esp32
+### 3. Abrir firmware ubicado en la carpeta sources/esp32
 
 Abrir:
 
 ```text
-ai-camera-firmware.in
+ai-camera-firmware.ino
 ```
 
 en Arduino IDE.

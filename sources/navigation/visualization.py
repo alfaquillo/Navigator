@@ -32,10 +32,10 @@ def draw_slam():
     # BGR (OpenCV)
     colors = np.array([
         [60, 60, 60],      # 0 background model 
-        [0, 255, 255],     # 1 crater   -> amarillo
-        [0, 0, 255],       # 2 rock     -> rojo
-        [255, 200, 0],     # 3 mountain -> azul/cyan
-        [0, 255, 0],       # 4 sky      -> verde 
+        [0, 255, 255],     # 1 crater   -> yellow
+        [0, 0, 255],       # 2 rock     -> red
+        [255, 200, 0],     # 3 mountain -> cyan
+        [0, 255, 0],       # 4 sky      -> green 
     ], dtype=np.uint8)
 
     h, w = grid.shape

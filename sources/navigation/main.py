@@ -3,6 +3,7 @@ import cv2
 import time
 import asyncio
 import numpy as np
+import socket
 
 from slam import grid
 from config import *
@@ -36,7 +37,21 @@ async def main():
     h, w = img.shape[:2]
     roi_mask, roi_pts = trapezoid_roi((h, w))
 
+    if TCP_STREAM:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('0.0.0.0', 8080))
+        sock.listen(1)
+        print("Esperando conexión del cliente...")
+        conn, addr = sock.accept()
+        print(f"Conectado a {addr}")
+
+    start = time.time()
+    frame_count = 0
+
     while True:
+        loop_start = time.time()
+
         ret, img, idx = source.read()
         if not ret:
             break
@@ -97,7 +112,7 @@ async def main():
         move_rover(slam_decision)
 
         # --------------------------
-        # ACTUALIZAR COMANDO (NO enviar aquí)
+        # ACTUALIZAR COMANDO 
         # --------------------------
         rover.current_command = command
         last_command = command
@@ -115,21 +130,68 @@ async def main():
 
             combined = np.hstack([img, color_mask, overlay])
 
+        if SLAM_SHOW:
             cv2.imshow("Segmentation", combined)
-            cv2.imshow("SLAM", draw_slam())
+            slam_view = draw_slam()
+            cv2.imshow("SLAM", slam_view)
             cv2.waitKey(1)
+
+        if TCP_STREAM:
+            try:
+                # Codificar a JPEG con MÁXIMA CALIDAD
+                _, jpeg = cv2.imencode('.jpg', combined, [cv2.IMWRITE_JPEG_QUALITY, 100])  # Calidad 100%
+                data = jpeg.tobytes()
+                
+                # Enviar
+                conn.sendall(len(data).to_bytes(4, 'big'))
+                conn.sendall(data)
+                print(f"Frame {idx} enviado, tamaño: {len(data)} bytes")
+                
+            except (BrokenPipeError, ConnectionResetError) as e:
+                print(f"Cliente desconectado (frame {idx}): {e}")
+                try:
+                    conn.close()
+                    print("Esperando nueva conexión...")
+                    conn, addr = sock.accept()
+                    print(f"Reconectado a {addr}")
+                    # Reintentar enviar este frame
+                    _, jpeg = cv2.imencode('.jpg', combined, [cv2.IMWRITE_JPEG_QUALITY, 100])
+                    data = jpeg.tobytes()
+                    conn.sendall(len(data).to_bytes(4, 'big'))
+                    conn.sendall(data)
+                    print(f"Frame {idx} re-enviado")
+                except Exception as recon_error:
+                    print(f"Error reconectando: {recon_error}")
+                    
+            except Exception as e:
+                print(f"Error enviando frame {idx}: {e}")
+
+        if SAVE_IMAGES:
+            out_path = os.path.join(SAVE_DIR, f"frame_{idx:04d}.png")
+            cv2.imwrite(out_path, combined)
+            final_map = draw_slam()
+            cv2.imwrite("slam_final.png", final_map)
+            np.savetxt("full_map_classes.csv", grid, fmt="%d", delimiter=",")
 
         await asyncio.sleep(0.3)
 
-    end = time.time()
+        frame_count += 1
+        loop_time = time.time() - loop_start
+        instant_fps = 1 / loop_time if loop_time > 0 else 0 
 
-    total_time = end - start
-    fps = len(image_paths) / total_time
+
+    total_time = time.time() - start
+    avg_fps = frame_count / total_time if total_time > 0 else 0
 
     print("\n==== RESULTADOS ====")
-    print("FPS:", round(fps, 2))
+    print(f"Frames procesados: {frame_count}")
+    print(f"Tiempo total: {total_time:.2f}s")
+    print(f"FPS promedio: {avg_fps:.2f}")
 
     await rover.close()
+    if TCP_STREAM:
+        conn.close()
+        sock.close()
     cv2.destroyAllWindows()
 
 
