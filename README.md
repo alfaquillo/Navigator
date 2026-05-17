@@ -28,6 +28,7 @@ El objetivo es permitir navegación autónoma en terrenos no estructurados simil
 .
 ├── documentation
 │   └── project_proposal
+│   └── final_document
 ├── images
 │   ├── LogoTec.png
 │   └── Rasp.png
@@ -48,9 +49,10 @@ El objetivo es permitir navegación autónoma en terrenos no estructurados simil
 |---------|-------------|
 | `documentation/` | documentación académica del proyecto |
 | `documentation/project_proposal/` | anteproyecto en LaTeX |
+| `documentation/final_document/` | informe final en LaTeX |
 | `images/` | imágenes utilizadas en documentación |
 | `sources/development/` | pruebas y scripts de desarrollo |
-| `sources/esp32/` | código asociado al ESP32 |
+| `sources/esp32/` | firmware del ESP32 |
 | `sources/navigation/` | sistema principal de navegación ejecutado en Raspberry Pi 5 |
 | `sources/rover_firmware/` | firmware del rover |
 | `sources/yocto-project/` | configuración y capas para generación de imagen Yocto |
