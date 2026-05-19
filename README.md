@@ -164,8 +164,8 @@ Configuración:
 
 - La Raspberry Pi genera la red local utilizada por el sistema.
 - El rover (ESP32) se conecta automáticamente a esta red al iniciar.
-- Los clientes externos (por ejemplo laptop para monitoreo) deben conectarse manualmente a la misma red Wi-Fi.
-Todos los dispositivos deben conectarse a esta red local:
+- Los clientes externos (por ejemplo laptop para monitoreo) deben conectarse manualmente a la misma red Wi-Fi:
+
 
 ```text
 SSID: Moon_rpi_AP
