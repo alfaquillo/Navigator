@@ -10,7 +10,7 @@
 #define WS_BUFFER_SIZE 1024
 
 #define TIMEOUT 3000             // timeout pong
-#define CMD_TIMEOUT 300           // timeout comandos
+#define CMD_TIMEOUT 1000          // timeout comandos
 #define MIN_PROCESS_INTERVAL 30
 #define SEND_INTERVAL 50
 

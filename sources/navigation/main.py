@@ -118,60 +118,194 @@ async def main():
         last_command = command
 
         # --------------------------
-        # DEBUG
-        # --------------------------
+        # DEBUG VIEWS
+        # ==================================================
+
+        inference_view = None
+        slam_view = None
+        stream_frame = None
+
         if DEBUG:
 
+            # --------------------------------------------------
+            # INFERENCE VIEW
+            # --------------------------------------------------
+
             color_mask = colorize_mask(mask)
-            overlay = cv2.addWeighted(img, 0.6, color_mask, 0.4, 0)
+
+            overlay = cv2.addWeighted(
+                img,
+                0.6,
+                color_mask,
+                0.4,
+                0
+            )
 
             if roi_pts is not None:
-                cv2.polylines(overlay, [roi_pts], True, (255, 0, 255), 2)
 
-            combined = np.hstack([img, color_mask, overlay])
+                cv2.polylines(
+                    overlay,
+                    [roi_pts],
+                    True,
+                    (255, 0, 255),
+                    2
+                )
 
-        if SLAM_SHOW:
-            cv2.imshow("Segmentation", combined)
+            # [img | mask | overlay]
+            inference_view = np.hstack([
+                img,
+                color_mask,
+                overlay
+            ])
+
+
+            # --------------------------------------------------
+            # SLAM VIEW
+            # --------------------------------------------------
+
             slam_view = draw_slam()
-            cv2.imshow("SLAM", slam_view)
-            cv2.waitKey(1)
+
+
+        # ==================================================
+        # TCP STREAM VIEW SELECTION
+        # ==================================================
 
         if TCP_STREAM:
+
+            if SHOW_INFERENCE:
+
+                stream_frame = inference_view
+
+            elif SHOW_SLAM:
+
+                stream_frame = slam_view
+
+            else:
+
+                print(
+                    "TCP_STREAM activo pero "
+                    "no hay vista seleccionada"
+                )
+
+
+        # ==================================================
+        # TCP STREAM
+        # ==================================================
+
+        if TCP_STREAM and stream_frame is not None:
+
             try:
-                # Codificar a JPEG con MÁXIMA CALIDAD
-                _, jpeg = cv2.imencode('.jpg', combined, [cv2.IMWRITE_JPEG_QUALITY, 100])  # Calidad 100%
+
+                _, jpeg = cv2.imencode(
+                    '.jpg',
+                    stream_frame,
+                    [cv2.IMWRITE_JPEG_QUALITY, 85]
+                )
+
                 data = jpeg.tobytes()
-                
-                # Enviar
-                conn.sendall(len(data).to_bytes(4, 'big'))
+
+                # Enviar tamaño
+                conn.sendall(
+                    len(data).to_bytes(4, 'big')
+                )
+
+                # Enviar frame
                 conn.sendall(data)
-                print(f"Frame {idx} enviado, tamaño: {len(data)} bytes")
-                
-            except (BrokenPipeError, ConnectionResetError) as e:
-                print(f"Cliente desconectado (frame {idx}): {e}")
+
+                print(
+                    f"Frame {idx} enviado, "
+                    f"tamaño: {len(data)} bytes"
+                )
+
+            except (
+                BrokenPipeError,
+                ConnectionResetError
+            ) as e:
+
+                print(
+                    f"Cliente desconectado "
+                    f"(frame {idx}): {e}"
+                )
+
                 try:
+
                     conn.close()
-                    print("Esperando nueva conexión...")
+
+                    print(
+                        "Esperando nueva conexión..."
+                    )
+
                     conn, addr = sock.accept()
-                    print(f"Reconectado a {addr}")
-                    # Reintentar enviar este frame
-                    _, jpeg = cv2.imencode('.jpg', combined, [cv2.IMWRITE_JPEG_QUALITY, 100])
+
+                    print(
+                        f"Reconectado a {addr}"
+                    )
+
+                    # Reintentar envío
+                    _, jpeg = cv2.imencode(
+                        '.jpg',
+                        stream_frame,
+                        [cv2.IMWRITE_JPEG_QUALITY, 85]
+                    )
+
                     data = jpeg.tobytes()
-                    conn.sendall(len(data).to_bytes(4, 'big'))
+
+                    conn.sendall(
+                        len(data).to_bytes(4, 'big')
+                    )
+
                     conn.sendall(data)
-                    print(f"Frame {idx} re-enviado")
+
+                    print(
+                        f"Frame {idx} re-enviado"
+                    )
+
                 except Exception as recon_error:
-                    print(f"Error reconectando: {recon_error}")
-                    
+
+                    print(
+                        f"Error reconectando: "
+                        f"{recon_error}"
+                    )
+
             except Exception as e:
-                print(f"Error enviando frame {idx}: {e}")
+
+                print(
+                    f"Error enviando frame "
+                    f"{idx}: {e}"
+                )
+
+
+        # ==================================================
+        # SAVE DEBUG IMAGES
+        # ==================================================
 
         if SAVE_IMAGES:
-            out_path = os.path.join(SAVE_DIR, f"frame_{idx:04d}.png")
-            cv2.imwrite(out_path, combined)
-            final_map = draw_slam()
-            cv2.imwrite("slam_final.png", final_map)
-            np.savetxt("full_map_classes.csv", grid, fmt="%d", delimiter=",")
+
+            # --------------------------------------------------
+            # SAVE INFERENCE FRAMES
+            # --------------------------------------------------
+
+            if SHOW_INFERENCE and inference_view is not None:
+
+                inference_dir = os.path.join(
+                    SAVE_DIR,
+                    "inference"
+                )
+
+                os.makedirs(
+                    inference_dir,
+                    exist_ok=True
+                )
+
+                out_path = os.path.join(
+                    inference_dir,
+                    f"inference_{idx:04d}.png"
+                )
+
+                cv2.imwrite(
+                    out_path,
+                    inference_view
+                )
 
         await asyncio.sleep(0.3)
 
@@ -179,7 +313,48 @@ async def main():
         loop_time = time.time() - loop_start
         instant_fps = 1 / loop_time if loop_time > 0 else 0 
 
+    # ==================================================
+    # GUARDAR RESULTADOS FINALES SLAM
+    # ==================================================
 
+    if SAVE_IMAGES and SHOW_SLAM:
+
+        slam_dir = os.path.join(
+            SAVE_DIR,
+            "slam"
+        )
+
+        os.makedirs(
+            slam_dir,
+            exist_ok=True
+        )
+
+        final_map = draw_slam()
+
+        cv2.imwrite(
+            os.path.join(
+                slam_dir,
+                "slam_final.png"
+            ),
+            final_map
+        )
+
+        np.savetxt(
+            os.path.join(
+                slam_dir,
+                "full_map_classes.csv"
+            ),
+            grid,
+            fmt="%d",
+            delimiter=","
+        )
+
+        print("Mapa SLAM final guardado")    
+
+    # ==================================================
+    # RESULTADOS
+    # ==================================================
+             
     total_time = time.time() - start
     avg_fps = frame_count / total_time if total_time > 0 else 0
 

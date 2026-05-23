@@ -20,8 +20,9 @@ IMG_DATASET_W = 384
 SAVE_DIR = "results"
 
 DEBUG = True
+SHOW_INFERENCE = True
 SAVE_IMAGES = True
-SLAM_SHOW = False
+SHOW_SLAM = False
 TCP_STREAM = True
 
 os.makedirs(SAVE_DIR, exist_ok=True)

@@ -241,7 +241,7 @@ class RoverClient:
                 "duracion_ms": int(CMD_TIME)
             }
 
-            print(f"CMD -> {decision} | K:{cmd['K']} Q:{cmd['Q']}")
+            print(f"{decision} | K:{cmd['K']} Q:{cmd['Q']}")
 
             await self.ws.send(json.dumps(cmd))
 
@@ -251,7 +251,6 @@ class RoverClient:
             if self.connected and not self.reconnecting:
                 self.connected = False
                 await self.reconnect()
-
 
     # ----------------------
     # LOOP DE ENVÍO
