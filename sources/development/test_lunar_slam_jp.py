@@ -15,11 +15,11 @@ import socket
 #MODEL_PATH = "lunar_rpi5_int8.tflite" #RPI
 #MODEL_PATH = "lunar_rpi5_float16.tflite" #INTELCPU
 MODEL_PATH = "model_int8.tflite" #final model
-IMAGE_DIR = "dataset_test"
+IMAGE_DIR = "dataset_test_384"
 SAVE_DIR = "results"
 
 DEBUG = True
-SAVE_IMAGES = False
+SAVE_IMAGES = True
 
 IMG_DATASET_H = 384
 IMG_DATASET_W = 384

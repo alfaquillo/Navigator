@@ -132,7 +132,7 @@ Incluye:
 ## Hardware
 - Raspberry Pi 5
 - Rover móvil Sunfounder GalaxyRVR
-
+- Arduino Mega
 ## Software
 - Python 3.10
 - OpenCV
