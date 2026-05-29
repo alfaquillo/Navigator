@@ -14,7 +14,7 @@ def colorize_mask(mask):
         [0, 255, 255], #yellow craters
         [0, 0, 255],   #red rocks
         [255, 200, 0], #blue mountains
-        [0, 255, 0]    #green sky
+        [0, 255, 0],    #green sky
     ], dtype=np.uint8)
 
     return colors[mask]
@@ -35,7 +35,8 @@ def draw_slam():
         [0, 255, 255],     # 1 crater   -> yellow
         [0, 0, 255],       # 2 rock     -> red
         [255, 200, 0],     # 3 mountain -> cyan
-        [0, 255, 0],       # 4 sky      -> green 
+        [0, 255, 0],       # 4 sky      -> green
+        [180,180,180]      # free terrain 
     ], dtype=np.uint8)
 
     h, w = grid.shape
@@ -51,7 +52,7 @@ def draw_slam():
     # -----------------------------------
     observed = grid != UNKNOWN
 
-    valid_classes = observed & (grid <= 4)
+    valid_classes = observed & (grid <= FREE)
     vis[valid_classes] = colors[grid[valid_classes]]
 
     # -----------------------------------
@@ -109,5 +110,45 @@ def draw_slam():
         None,
         fx=5,
         fy=5,
+        interpolation=cv2.INTER_NEAREST
+    )
+def draw_full_map():
+
+    grid = slam.grid
+
+    colors = np.array([
+        [60, 60, 60],      # unknown
+        [0, 255, 255],     # crater
+        [0, 0, 255],       # rock
+        [255, 200, 0],     # mountain
+        [0, 255, 0],       # sky
+        [180, 180, 180],   # free
+    ], dtype=np.uint8)
+
+    h, w = grid.shape
+
+    vis = np.zeros((h, w, 3), dtype=np.uint8)
+
+    vis[:] = (40, 40, 40)
+
+    observed = grid != UNKNOWN
+    valid = observed & (grid <= FREE)
+
+    vis[valid] = colors[grid[valid]]
+
+    # trayectoria histórica
+    for tx, ty, _ in slam.trajectory:
+
+        gx = int(slam.origin_x + tx / slam.CELL_M)
+        gy = int(slam.origin_y - ty / slam.CELL_M)
+
+        if 0 <= gx < w and 0 <= gy < h:
+            vis[gy, gx] = (255, 0, 255)
+
+    return cv2.resize(
+        vis,
+        None,
+        fx=3,
+        fy=3,
         interpolation=cv2.INTER_NEAREST
     )

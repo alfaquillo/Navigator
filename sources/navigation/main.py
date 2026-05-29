@@ -11,7 +11,7 @@ from model import load_model, infer
 from perception import preprocess, create_navigation_mask, trapezoid_roi
 from navigation import decide_direction
 from slam import integrate_observation, move_rover
-from visualization import colorize_mask, draw_slam
+from visualization import colorize_mask, draw_slam , draw_full_map
 from rover_ws import RoverClient
 from frame_source import FrameSource
 
@@ -329,7 +329,7 @@ async def main():
             exist_ok=True
         )
 
-        final_map = draw_slam()
+        final_map = draw_full_map()
 
         cv2.imwrite(
             os.path.join(
@@ -367,7 +367,11 @@ async def main():
     if TCP_STREAM:
         conn.close()
         sock.close()
-    cv2.destroyAllWindows()
+
+    try:
+        cv2.destroyAllWindows()
+    except:
+        pass
 
 
 if __name__ == "__main__":

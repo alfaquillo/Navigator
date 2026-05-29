@@ -31,12 +31,13 @@ def meters_to_cell():
 def expand_map_if_needed(rx, ry):
     global grid, origin_x, origin_y, MAP_W, MAP_H
 
-    pad = 40
-
-    expand_left = rx < 5
-    expand_right = rx > MAP_W - 6
-    expand_top = ry < 5
-    expand_bottom = ry > MAP_H - 6
+    pad = 120
+    MARGIN = 40
+    
+    expand_left   = rx < MARGIN
+    expand_right  = rx > MAP_W - MARGIN - 1
+    expand_top    = ry < MARGIN
+    expand_bottom = ry > MAP_H - MARGIN - 1
 
     if not (expand_left or expand_right or expand_top or expand_bottom):
         return
@@ -86,6 +87,13 @@ def move_rover(decision):
 
     trajectory.append((x_m, y_m, theta))
 
+    rx, ry = meters_to_cell()
+
+    h, w = grid.shape
+
+    if 0 <= rx < w and 0 <= ry < h:
+        grid[ry, rx] = FREE
+
 
 # ==============================
 # INTEGRACIÓN OBSERVACIÓN
@@ -94,7 +102,9 @@ def integrate_observation(mask):
     global grid
 
     rx, ry = meters_to_cell()
+
     expand_map_if_needed(rx, ry)
+
     rx, ry = meters_to_cell()
 
     h, w = grid.shape
@@ -102,33 +112,57 @@ def integrate_observation(mask):
     if not (0 <= rx < w and 0 <= ry < h):
         return
 
+    # -----------------------------------
+    # recorte inferior (suelo)
+    # -----------------------------------
     start_row = int(mask.shape[0] * 0.45)
     cropped = mask[start_row:, :]
 
-    mini = cropped[::6, ::6]
+    # -----------------------------------
+    # downsample
+    # -----------------------------------
+    mini = cropped[::10, ::10]
+
     mh, mw = mini.shape
 
-    
+    DEPTH_SCALE = 0.7
+    LATERAL_SCALE = 0.9
 
     painted = 0
-    class_counts = {}
+    free_painted = 0
 
-    DEPTH_SCALE = 0.5
-    LATERAL_SCALE = 0.7
-
+    # -----------------------------------
+    # recorrer observaciones
+    # -----------------------------------
     for r in range(mh):
         for c in range(mw):
 
             val = int(mini[r, c])
 
-            if val in [UNKNOWN_CLASS, SKY]:
+            # -----------------------------------
+            # ignorar solo desconocido
+            # -----------------------------------
+            if val == UNKNOWN_CLASS:
                 continue
 
+            # -----------------------------------
+            # determinar si es obstáculo real
+            # -----------------------------------
+            is_obstacle = (val != SKY)
+
+            # -----------------------------------
+            # profundidad relativa
+            # -----------------------------------
             depth = (mh - r) * DEPTH_SCALE
 
-            
+            # -----------------------------------
+            # desplazamiento lateral
+            # -----------------------------------
             lateral = (mw / 2 - c) * LATERAL_SCALE
 
+            # -----------------------------------
+            # coordenadas mundo relativas
+            # -----------------------------------
             wx = (
                 depth * math.cos(theta)
                 - lateral * math.sin(theta)
@@ -139,12 +173,58 @@ def integrate_observation(mask):
                 + lateral * math.cos(theta)
             )
 
+            # -----------------------------------
+            # celda global objetivo
+            # -----------------------------------
             gx = int(rx + wx)
             gy = int(ry - wy)
 
-            if 0 <= gx < w and 0 <= gy < h:
-                grid[gy, gx] = val
-                painted += 1
-                class_counts[val] = class_counts.get(val, 0) + 1
+            # -----------------------------------
+            # pintar espacio libre
+            # -----------------------------------
+            steps = max(1, int(depth))
 
+            for s in range(steps):
+
+                fx = int(rx + (wx * s / depth))
+                fy = int(ry - (wy * s / depth))
+
+                if 0 <= fx < w and 0 <= fy < h:
+
+                    # -----------------------------------
+                    # expandir free space localmente
+                    # -----------------------------------
+                    R = 2
+
+                    for oy in range(-R, R + 1):
+                        for ox in range(-R, R + 1):
+
+                            nx = fx + ox
+                            ny = fy + oy
+
+                            if 0 <= nx < w and 0 <= ny < h:
+
+                                # solo llenar unknown
+                                if grid[ny, nx] == UNKNOWN:
+
+                                    grid[ny, nx] = FREE
+                                    free_painted += 1
+
+            # -----------------------------------
+            # pintar obstáculo si aplica
+            # -----------------------------------
+            if is_obstacle:
+
+                if 0 <= gx < w and 0 <= gy < h:
+
+                    # obstáculo sobrescribe FREE
+                    grid[gy, gx] = val
+
+                    painted += 1
+
+    print(
+        f"[SLAM] Obstacles: {painted} | "
+        f"Free: {free_painted} | "
+        f"Map: {grid.shape}"
+    )
     

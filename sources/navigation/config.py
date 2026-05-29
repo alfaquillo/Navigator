@@ -20,9 +20,9 @@ IMG_DATASET_W = 384
 SAVE_DIR = "results"
 
 DEBUG = True
-SHOW_INFERENCE = True
+SHOW_INFERENCE = False
 SAVE_IMAGES = True
-SHOW_SLAM = False
+SHOW_SLAM = True
 TCP_STREAM = True
 
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -58,9 +58,10 @@ ROCK = 2
 MOUNTAIN = 3
 SKY = 4
 UNKNOWN = 255
+FREE = 5
 
-TURN_ANGLE_DEG = 0.3
-STEP_METERS = 0.1
+TURN_ANGLE_DEG = 0.5
+STEP_METERS = 0.3
 
 
 # ==================================================
